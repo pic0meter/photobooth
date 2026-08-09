@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7f2e9">
+  <title>Photo Booth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="booth">
+    <header class="header">
+      <div class="logo">PHOTO BOOTH</div>
+      <div class="date" id="date"></div>
+    </header>
+
+    <!-- HOME -->
+    <section id="homeScreen" class="screen active home-screen">
+      <div class="home-copy">
+        <p class="eyebrow">プリクラ / JAPANESE PHOTO BOOTH</p>
+        <h1>MAKE<br>YOUR<br>MEMORY <span>♡</span></h1>
+        <p class="description">A tiny photo booth for your favorite people, little moments, and cute memories.</p>
+        <button id="homeStartButton" class="primary-button" type="button">START →</button>
+      </div>
+      <div class="home-art" aria-hidden="true">
+        <div class="art-card art-card-one"><span>♡</span><b>SAKURA</b><small>soft & sweet</small></div>
+        <div class="art-card art-card-two"><span>✦</span><b>KAWAII</b><small>cute & dreamy</small></div>
+        <div class="art-card art-card-three"><span>☘</span><b>MATCHA</b><small>calm & clean</small></div>
+        <div class="art-note">4 CUTS<br>ONE MEMORY</div>
+      </div>
+    </section>
+
+    <!-- STYLE / LAYOUT SELECTION -->
+    <section id="selectionScreen" class="screen selection-screen">
+      <div class="selection-top">
+        <div>
+          <p class="eyebrow">STEP 01 / FRAME</p>
+          <h2>CHOOSE YOUR<br><em>STYLE</em> ♡</h2>
+        </div>
+        <button id="backHomeButton" class="text-button" type="button">← BACK</button>
+      </div>
+
+      <div class="frame-grid">
+        <button class="frame-card selected" data-style="sakura" type="button">
+          <div class="frame-preview sakura-preview">
+            <div class="preview-photo p1">♡</div><div class="preview-photo p2">✿</div>
+            <div class="preview-photo p3">♡</div><div class="preview-photo p4">✿</div>
+          </div>
+          <div class="frame-meta"><strong>SAKURA</strong><span>soft pink / spring</span></div>
+        </button>
+        <button class="frame-card" data-style="kawaii" type="button">
+          <div class="frame-preview kawaii-preview">
+            <div class="preview-photo p1">☆</div><div class="preview-photo p2">♡</div>
+            <div class="preview-photo p3">☆</div><div class="preview-photo p4">♡</div>
+          </div>
+          <div class="frame-meta"><strong>KAWAII</strong><span>lavender / dreamy</span></div>
+        </button>
+        <button class="frame-card" data-style="y2k" type="button">
+          <div class="frame-preview y2k-preview">
+            <div class="preview-photo p1">★</div><div class="preview-photo p2">✦</div>
+            <div class="preview-photo p3">★</div><div class="preview-photo p4">✦</div>
+          </div>
+          <div class="frame-meta"><strong>Y2K POP</strong><span>butter / retro</span></div>
+        </button>
+        <button class="frame-card" data-style="matcha" type="button">
+          <div class="frame-preview matcha-preview">
+            <div class="preview-photo p1">☘</div><div class="preview-photo p2">♡</div>
+            <div class="preview-photo p3">☘</div><div class="preview-photo p4">♡</div>
+          </div>
+          <div class="frame-meta"><strong>MATCHA</strong><span>sage / minimal</span></div>
+        </button>
+      </div>
+
+      <div class="layout-section">
+        <div class="selection-top compact">
+          <div>
+            <p class="eyebrow">STEP 02 / LAYOUT</p>
+            <h3>CHOOSE YOUR PRINT</h3>
+          </div>
+          <p class="selection-note">All layouts use the same four photos.</p>
+        </div>
+        <div class="layout-grid">
+          <button class="layout-card selected" data-layout="classic" type="button">
+            <span class="layout-preview classic-layout-preview"></span>
+            <strong>4-CUT</strong><small>vertical strip</small>
+          </button>
+          <button class="layout-card" data-layout="grid" type="button">
+            <span class="layout-preview grid-layout-preview"></span>
+            <strong>2 × 2</strong><small>square grid</small>
+          </button>
+          <button class="layout-card" data-layout="wide" type="button">
+            <span class="layout-preview wide-layout-preview"></span>
+            <strong>WIDE</strong><small>film strip</small>
+          </button>
+        </div>
+      </div>
+
+      <div class="selection-footer">
+        <div><span class="selected-label">SELECTED</span><strong id="selectionSummary">SAKURA · 4-CUT</strong></div>
+        <button id="beginButton" class="primary-button" type="button">CONTINUE →</button>
+      </div>
+    </section>
+
+    <!-- CAMERA -->
+    <section id="cameraScreen" class="screen camera-screen">
+      <div class="camera-header">
+        <div>
+          <p class="eyebrow">STEP 03 / PHOTO</p>
+          <strong id="photoNumber">PHOTO 1 / 4</strong>
+        </div>
+        <div id="countdown" class="countdown"></div>
+      </div>
+      <div class="session-progress" id="sessionProgress">
+        <span class="progress-dot active"></span><span class="progress-dot"></span><span class="progress-dot"></span><span class="progress-dot"></span>
+      </div>
+      <div class="camera-wrapper">
+        <video id="video" autoplay playsinline muted></video>
+        <div id="flash" class="flash"></div>
+        <div class="camera-overlay"><span></span><span></span><span></span><span></span></div>
+        <div class="camera-style-badge" id="cameraStyleBadge">SAKURA</div>
+      </div>
+      <div class="camera-controls">
+        <button id="switchCameraButton" class="secondary-button" type="button">↻ FLIP CAMERA</button>
+      </div>
+      <p class="hint" id="cameraHint">Get ready — the booth will take all four photos automatically. ♡</p>
+    </section>
+
+    <!-- RESULT -->
+    <section id="resultScreen" class="screen result-screen">
+      <div class="result-layout">
+        <div class="result-info">
+          <p class="eyebrow">STEP 04 / DONE</p>
+          <h2>YOUR<br>MEMORY <span>♡</span></h2>
+          <p>Four photos, one little keepsake.</p>
+          <div class="selected-summary" id="selectedSummary"></div>
+          <div class="result-actions-label">SHARE YOUR MEMORY</div>
+          <div class="result-buttons">
+            <button id="downloadButton" class="primary-button" type="button">DOWNLOAD PNG</button>
+            <button id="downloadGifButton" class="secondary-button" type="button">DOWNLOAD GIF</button>
+            <button id="shareButton" class="secondary-button" type="button">SHARE ↗</button>
+            <button id="retakeButton" class="text-button result-retake" type="button">MAKE ANOTHER</button>
+          </div>
+        </div>
+        <div class="strip-container"><img id="photoStrip" alt="Your photo booth print"><div id="gifLoading" class="gif-loading">CREATING GIF…</div></div>
+      </div>
+    </section>
+
+    <!-- ERROR -->
+    <section id="errorScreen" class="screen error-screen">
+      <div class="error-content">
+        <p class="eyebrow">CAMERA / PERMISSION</p>
+        <h2>WE NEED<br>YOUR CAMERA ♡</h2>
+        <p>Allow camera access in your browser, then try again.</p>
+        <button id="errorBackButton" class="primary-button" type="button">TRY AGAIN</button>
+      </div>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
