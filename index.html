@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swimming Aquarium 3D View</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #051923, #003554, #006494);
+            font-family: sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 15px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="info">Drag to look around &bull; Scroll to zoom</div>
+
+    <!-- Import Three.js and add-ons via CDN -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // 1. Scene, Camera, & Renderer Setup
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x003554, 0.035);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2, 9);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        document.body.appendChild(renderer.domElement);
+
+        // 2. Interactive Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 + 0.1;
+        controls.minDistance = 2;
+        controls.maxDistance = 20;
+
+        // 3. Aquatic Lighting
+        const ambientLight = new THREE.AmbientLight(0x4ea8de, 1.5);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 3.0);
+        sunLight.position.set(5, 10, 5);
+        scene.add(sunLight);
+
+        const groundLight = new THREE.DirectionalLight(0x0077b6, 2.0);
+        groundLight.position.set(-5, -10, -5);
+        scene.add(groundLight);
+
+        // 4. Floating Bubbles/Plankton
+        const particleCount = 250;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 20;
+            positions[i + 1] = (Math.random() - 0.5) * 15;
+            positions[i + 2] = (Math.random() - 0.5) * 20;
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const particleMaterial = new THREE.PointsMaterial({
+            color: 0x90e0ef,
+            size: 0.06,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+        const particles = new THREE.Points(geometry, particleMaterial);
+        scene.add(particles);
+
+        // 5. Load the GLB Model
+        let model = null;
+        const loader = new GLTFLoader();
+        
+        loader.load('model.glb', (gltf) => {
+            model = gltf.scene;
+            
+            // Auto-center and normalize scale
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 3 / maxDim;
+            model.scale.setScalar(scale);
+            
+            // Move origin to center of geometry for clean rotation physics
+            model.position.sub(center.multiplyScalar(scale));
+            scene.add(model);
+        }, undefined, (error) => {
+            console.error('An error occurred loading the GLB model:', error);
+        });
+
+        // 6. Animation Loop (Swimming Physics)
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            if (model) {
+                // Swimming path: Smooth looping path around the center of the aquarium
+                const swimSpeed = 0.8;
+                const pathRadiusX = 2.5;
+                const pathRadiusZ = 1.5;
+
+                // Calculate X and Z positions in a smooth oval loop
+                const x = Math.sin(elapsedTime * swimSpeed) * pathRadiusX;
+                const z = Math.cos(elapsedTime * swimSpeed * 0.5) * pathRadiusZ;
+                // Gentle up and down drifting like real buoyancy control
+                const y = Math.sin(elapsedTime * 1.5) * 0.3;
+
+                model.position.set(x, y, z);
+
+                // Calculate heading rotation so the model automatically faces the direction it's swimming
+                const nextX = Math.sin((elapsedTime + 0.05) * swimSpeed) * pathRadiusX;
+                const nextZ = Math.cos((elapsedTime + 0.05) * swimSpeed * 0.5) * pathRadiusZ;
+                const dx = nextX - x;
+                const dz = nextZ - z;
+                const angle = Math.atan2(dx, dz);
+                
+                model.rotation.y = angle + Math.PI / 2;
+
+                // Hydrodynamic physics body bending / tail wag simulation based on speed
+                const wag = Math.sin(elapsedTime * 8) * 0.08;
+                model.rotation.z = wag; // Side-to-side flex
+                model.rotation.x = Math.cos(elapsedTime * 4) * 0.04; // Pitch adjustment from water resistance
+            }
+
+            // Move background bubbles upward
+            const positions = particles.geometry.attributes.position.array;
+            for (let i = 1; i < positions.length; i += 3) {
+                positions[i] += 0.008;
+                if (positions[i] > 8) {
+                    positions[i] = -8;
+                }
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Window resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
