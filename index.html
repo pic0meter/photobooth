@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f1e8">
+  <meta name="description" content="A simple browser-based four-shot photo booth.">
+  <title>My Photo Booth</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="booth">
+    <header class="header">
+      <div class="logo">PHOTO BOOTH</div>
+      <div class="date" id="date"></div>
+    </header>
+
+    <section id="startScreen" class="screen active" aria-labelledby="welcomeTitle">
+      <div class="intro">
+        <p class="eyebrow">WELCOME TO</p>
+        <h1 id="welcomeTitle">MY<br>PHOTO<br>BOOTH</h1>
+        <p class="description">Four moments.<br>One little memory.</p>
+        <button id="startButton" class="primary-button" type="button">START</button>
+      </div>
+
+      <div class="decorative-strip" aria-hidden="true">
+        <div class="fake-photo">♡</div>
+        <div class="fake-photo">✦</div>
+        <div class="fake-photo">☻</div>
+        <div class="fake-photo">♡</div>
+      </div>
+    </section>
+
+    <section id="cameraScreen" class="screen" aria-label="Camera">
+      <div class="camera-header">
+        <div>
+          <span class="eyebrow">PHOTO</span>
+          <span id="photoNumber">1 / 4</span>
+        </div>
+        <div id="countdown" class="countdown" aria-live="assertive"></div>
+      </div>
+
+      <div class="camera-wrapper">
+        <video id="video" autoplay playsinline muted></video>
+        <div id="flash" class="flash" aria-hidden="true"></div>
+        <div class="camera-overlay" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <div class="camera-controls">
+        <button id="captureButton" class="capture-button" type="button" aria-label="Take photo">
+          <span></span>
+        </button>
+        <button id="switchCameraButton" class="secondary-button" type="button">↻ FLIP</button>
+      </div>
+      <p class="hint">Get ready! Your photo will be taken automatically.</p>
+    </section>
+
+    <section id="resultScreen" class="screen" aria-label="Photo result">
+      <div class="result-layout">
+        <div class="result-info">
+          <p class="eyebrow">YOUR MEMORIES</p>
+          <h2>LOOKS<br>GOOD.</h2>
+          <p>Your four-cut photo strip<br>is ready.</p>
+          <div class="result-buttons">
+            <button id="downloadButton" class="primary-button" type="button">DOWNLOAD</button>
+            <button id="retakeButton" class="secondary-button" type="button">RETAKE</button>
+          </div>
+        </div>
+        <div class="strip-container">
+          <img id="photoStrip" alt="Your photo strip">
+        </div>
+      </div>
+    </section>
+
+    <section id="errorScreen" class="screen" aria-label="Camera error">
+      <div class="error-content">
+        <p class="eyebrow">OH NO!</p>
+        <h2>CAMERA<br>ACCESS NEEDED</h2>
+        <p id="errorMessage">Please allow camera access in your browser and try again.</p>
+        <button id="errorBackButton" class="primary-button" type="button">TRY AGAIN</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
