@@ -1,187 +1,476 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swimming Aquarium 3D View</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: linear-gradient(to bottom, #051923, #003554, #006494);
-            font-family: sans-serif;
-        }
-        #info {
-            position: absolute;
-            top: 15px;
-            width: 100%;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.6);
-            pointer-events: none;
-            font-size: 14px;
-            letter-spacing: 1px;
-        }
-        canvas {
-            display: block;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Booth - 4-Cut Strip</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --accent: #ff4757;
+      --text: #ffffff;
+      --subtext: #aaaaaa;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    header {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 5px;
+    }
+
+    p.subtitle {
+      color: var(--subtext);
+      font-size: 0.9rem;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    /* Camera Section */
+    .camera-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      aspect-ratio: 4 / 3;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* Mirror view */
+    }
+
+    .countdown-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 6rem;
+      font-weight: bold;
+      color: #fff;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .countdown-overlay.active {
+      opacity: 1;
+    }
+
+    .flash {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .flash.animate {
+      animation: flash-animation 0.3s ease-out;
+    }
+
+    @keyframes flash-animation {
+      0% { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.2s ease;
+    }
+
+    button:hover {
+      background: #ff6b81;
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Gallery Selection Section */
+    .selection-section {
+      display: none;
+      width: 100%;
+      margin-top: 20px;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .selection-section.active {
+      display: flex;
+    }
+
+    .instruction {
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+      color: #e0e0e0;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 20px;
+    }
+
+    .photo-item {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .photo-item.selected {
+      border-color: var(--accent);
+      transform: scale(0.96);
+    }
+
+    .photo-item .badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: var(--accent);
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .photo-item.selected .badge {
+      opacity: 1;
+    }
+
+    /* Canvas Preview Section */
+    .strip-preview {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+  </style>
 </head>
 <body>
 
-    <div id="info">Drag to look around &bull; Scroll to zoom</div>
+  <header>
+    <h1>PHOTO BOOTH</h1>
+    <p class="subtitle">Take 10 continuous shots & pick your favorite 4!</p>
+  </header>
 
-    <!-- Import Three.js and add-ons via CDN -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
+  <div class="container">
+    <!-- Camera View -->
+    <div class="camera-wrapper">
+      <video id="video" autoplay playsinline></video>
+      <div id="countdown" class="countdown-overlay">3</div>
+      <div id="flash" class="flash"></div>
+    </div>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    <div class="controls">
+      <button id="start-btn">Start Session (10 Shots)</button>
+    </div>
 
-        // 1. Scene, Camera, & Renderer Setup
-        const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x003554, 0.035);
+    <!-- Selection Grid -->
+    <div id="selection-section" class="selection-section">
+      <p class="instruction" id="select-status">Select 4 photos (<span id="select-count">0</span>/4 selected):</p>
+      <div id="photo-grid" class="photo-grid"></div>
+      <button id="generate-btn" disabled>Generate Photo Strip</button>
+    </div>
 
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 2, 9);
+    <!-- Output Preview -->
+    <div class="strip-preview">
+      <canvas id="strip-canvas" style="display:none;"></canvas>
+      <button id="download-btn" style="display:none; margin-top: 15px;">Download Photo Strip</button>
+    </div>
+  </div>
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
-        document.body.appendChild(renderer.domElement);
+  <script>
+    const video = document.getElementById('video');
+    const startBtn = document.getElementById('start-btn');
+    const countdownEl = document.getElementById('countdown');
+    const flashEl = document.getElementById('flash');
+    const selectionSection = document.getElementById('selection-section');
+    const photoGrid = document.getElementById('photo-grid');
+    const selectCountEl = document.getElementById('select-count');
+    const generateBtn = document.getElementById('generate-btn');
+    const canvas = document.getElementById('strip-canvas');
+    const downloadBtn = document.getElementById('download-btn');
 
-        // 2. Interactive Controls
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.maxPolarAngle = Math.PI / 2 + 0.1;
-        controls.minDistance = 2;
-        controls.maxDistance = 20;
+    let capturedPhotos = [];
+    let selectedIndices = [];
 
-        // 3. Aquatic Lighting
-        const ambientLight = new THREE.AmbientLight(0x4ea8de, 1.5);
-        scene.add(ambientLight);
-
-        const sunLight = new THREE.DirectionalLight(0xffffff, 3.0);
-        sunLight.position.set(5, 10, 5);
-        scene.add(sunLight);
-
-        const groundLight = new THREE.DirectionalLight(0x0077b6, 2.0);
-        groundLight.position.set(-5, -10, -5);
-        scene.add(groundLight);
-
-        // 4. Floating Bubbles/Plankton
-        const particleCount = 250;
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(particleCount * 3);
-
-        for (let i = 0; i < particleCount * 3; i += 3) {
-            positions[i] = (Math.random() - 0.5) * 20;
-            positions[i + 1] = (Math.random() - 0.5) * 15;
-            positions[i + 2] = (Math.random() - 0.5) * 20;
-        }
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
-        const particleMaterial = new THREE.PointsMaterial({
-            color: 0x90e0ef,
-            size: 0.06,
-            transparent: true,
-            opacity: 0.6,
-            blending: THREE.AdditiveBlending
+    // Initialize Camera
+    async function initCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 960 }, facingMode: 'user' },
+          audio: false
         });
-        const particles = new THREE.Points(geometry, particleMaterial);
-        scene.add(particles);
+        video.srcObject = stream;
+      } catch (err) {
+        alert("Camera access denied or unavailable: " + err.message);
+      }
+    }
 
-        // 5. Load the GLB Model
-        let model = null;
-        const loader = new GLTFLoader();
-        
-        loader.load('model.glb', (gltf) => {
-            model = gltf.scene;
-            
-            // Auto-center and normalize scale
-            const box = new THREE.Box3().setFromObject(model);
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-            
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = 3 / maxDim;
-            model.scale.setScalar(scale);
-            
-            // Move origin to center of geometry for clean rotation physics
-            model.position.sub(center.multiplyScalar(scale));
-            scene.add(model);
-        }, undefined, (error) => {
-            console.error('An error occurred loading the GLB model:', error);
-        });
+    initCamera();
 
-        // 6. Animation Loop (Swimming Physics)
-        const clock = new THREE.Clock();
+    // Start 10 continuous shots session
+    startBtn.addEventListener('click', async () => {
+      startBtn.disabled = true;
+      capturedPhotos = [];
+      selectedIndices = [];
+      photoGrid.innerHTML = '';
+      selectionSection.classList.remove('active');
+      canvas.style.display = 'none';
+      downloadBtn.style.display = 'none';
 
-        function animate() {
-            requestAnimationFrame(animate);
-            const elapsedTime = clock.getElapsedTime();
+      for (let i = 0; i < 10; i++) {
+        await runCountdown(3);
+        triggerFlash();
+        capturePhoto();
+        await new Promise(r => setTimeout(r, 600)); // Pause briefly between shots
+      }
 
-            if (model) {
-                // Swimming path: Smooth looping path around the center of the aquarium
-                const swimSpeed = 0.8;
-                const pathRadiusX = 2.5;
-                const pathRadiusZ = 1.5;
+      startBtn.disabled = false;
+      renderSelectionGrid();
+    });
 
-                // Calculate X and Z positions in a smooth oval loop
-                const x = Math.sin(elapsedTime * swimSpeed) * pathRadiusX;
-                const z = Math.cos(elapsedTime * swimSpeed * 0.5) * pathRadiusZ;
-                // Gentle up and down drifting like real buoyancy control
-                const y = Math.sin(elapsedTime * 1.5) * 0.3;
+    function runCountdown(seconds) {
+      return new Promise((resolve) => {
+        let count = seconds;
+        countdownEl.textContent = count;
+        countdownEl.classList.add('active');
 
-                model.position.set(x, y, z);
+        const interval = setInterval(() => {
+          count--;
+          if (count > 0) {
+            countdownEl.textContent = count;
+          } else {
+            clearInterval(interval);
+            countdownEl.classList.remove('active');
+            resolve();
+          }
+        }, 800);
+      });
+    }
 
-                // Calculate heading rotation so the model automatically faces the direction it's swimming
-                const nextX = Math.sin((elapsedTime + 0.05) * swimSpeed) * pathRadiusX;
-                const nextZ = Math.cos((elapsedTime + 0.05) * swimSpeed * 0.5) * pathRadiusZ;
-                const dx = nextX - x;
-                const dz = nextZ - z;
-                const angle = Math.atan2(dx, dz);
-                
-                model.rotation.y = angle + Math.PI / 2;
+    function triggerFlash() {
+      flashEl.classList.add('animate');
+      setTimeout(() => flashEl.classList.remove('animate'), 300);
+    }
 
-                // Hydrodynamic physics body bending / tail wag simulation based on speed
-                const wag = Math.sin(elapsedTime * 8) * 0.08;
-                model.rotation.z = wag; // Side-to-side flex
-                model.rotation.x = Math.cos(elapsedTime * 4) * 0.04; // Pitch adjustment from water resistance
-            }
+    function capturePhoto() {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = video.videoWidth || 640;
+      tempCanvas.height = video.videoHeight || 480;
+      const ctx = tempCanvas.getContext('2d');
 
-            // Move background bubbles upward
-            const positions = particles.geometry.attributes.position.array;
-            for (let i = 1; i < positions.length; i += 3) {
-                positions[i] += 0.008;
-                if (positions[i] > 8) {
-                    positions[i] = -8;
-                }
-            }
-            particles.geometry.attributes.position.needsUpdate = true;
+      // Mirror back horizontally so final image matches live video orientation
+      ctx.translate(tempCanvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
 
-            controls.update();
-            renderer.render(scene, camera);
+      capturedPhotos.push(tempCanvas.toDataURL('image/jpeg'));
+    }
+
+    function renderSelectionGrid() {
+      selectionSection.classList.add('active');
+      capturedPhotos.forEach((src, index) => {
+        const item = document.createElement('div');
+        item.className = 'photo-item';
+
+        const img = document.createElement('img');
+        img.src = src;
+
+        const badge = document.createElement('div');
+        badge.className = 'badge';
+
+        item.appendChild(img);
+        item.appendChild(badge);
+
+        item.addEventListener('click', () => toggleSelection(index, item));
+        photoGrid.appendChild(item);
+      });
+    }
+
+    function toggleSelection(index, element) {
+      const pos = selectedIndices.indexOf(index);
+      if (pos > -1) {
+        selectedIndices.splice(pos, 1);
+      } else {
+        if (selectedIndices.length < 4) {
+          selectedIndices.push(index);
+        } else {
+          return;
         }
+      }
 
-        animate();
+      updateSelectionUI();
+    }
 
-        // Window resizing
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
+    function updateSelectionUI() {
+      const items = photoGrid.querySelectorAll('.photo-item');
+      items.forEach((item, index) => {
+        const selIndex = selectedIndices.indexOf(index);
+        if (selIndex > -1) {
+          item.classList.add('selected');
+          item.querySelector('.badge').textContent = selIndex + 1;
+        } else {
+          item.classList.remove('selected');
+        }
+      });
+
+      selectCountEl.textContent = selectedIndices.length;
+      generateBtn.disabled = selectedIndices.length !== 4;
+    }
+
+    generateBtn.addEventListener('click', generateStrip);
+
+    function generateStrip() {
+      const ctx = canvas.getContext('2d');
+
+      // Strip dimensions (Life Four Cuts vertical format ratio)
+      const stripWidth = 400;
+      const headerHeight = 80;
+      const footerHeight = 60;
+      const padding = 16;
+      const gap = 12;
+
+      const photoWidth = stripWidth - (padding * 2);
+      const photoHeight = (photoWidth * 3) / 4; // 4:3 ratio
+
+      const stripHeight = headerHeight + (photoHeight * 4) + (gap * 3) + footerHeight + padding;
+
+      canvas.width = stripWidth;
+      canvas.height = stripHeight;
+
+      // Draw Background (Warm cream / off-white frame)
+      ctx.fillStyle = '#f4f1ea';
+      ctx.fillRect(0, 0, stripWidth, stripHeight);
+
+      // Draw Top Header Banner
+      ctx.fillStyle = '#333333';
+      ctx.font = 'italic bold 22px Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Holly Jolly Memories', stripWidth / 2, 48);
+
+      // Draw Selected 4 Photos
+      let loadedImages = 0;
+      selectedIndices.forEach((photoIndex, i) => {
+        const img = new Image();
+        img.src = capturedPhotos[photoIndex];
+        img.onload = () => {
+          const y = headerHeight + i * (photoHeight + gap);
+          ctx.drawImage(img, padding, y, photoWidth, photoHeight);
+
+          // Draw Right Margin Decorative Text (Vertical)
+          ctx.save();
+          ctx.translate(stripWidth - 6, y + photoHeight / 2);
+          ctx.rotate(Math.PI / 2);
+          ctx.font = 'bold 8px sans-serif';
+          ctx.fillStyle = '#b53434';
+          ctx.textAlign = 'center';
+          ctx.fillText('PHOTOISM • FOUR CUTS', 0, 0);
+          ctx.restore();
+
+          loadedImages++;
+          if (loadedImages === 4) {
+            drawFooter(ctx, stripWidth, stripHeight);
+            canvas.style.display = 'block';
+            downloadBtn.style.display = 'inline-block';
+            canvas.scrollIntoView({ behavior: 'smooth' });
+          }
+        };
+      });
+    }
+
+    function drawFooter(ctx, width, height) {
+      ctx.fillStyle = '#888888';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      const dateStr = new Date().toLocaleDateString();
+      ctx.fillText(`KEEP YOURSELF ALIVE • ${dateStr}`, width / 2, height - 20);
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `photo-strip-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  </script>
 </body>
 </html>
